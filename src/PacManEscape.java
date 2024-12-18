@@ -1,28 +1,38 @@
-import name.panitz.game2d.Game;
-import name.panitz.game2d.GameObj;
+import name.panitz.game2d.*;
 
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.List;
 
-record PacManEscape() implements Game {
+record PacManEscape(FallingImage player, List<List<? extends GameObj>> goss) implements Game {
+    public static void main(String[] args) {
+        new PacManEscape().play();
+    }
 
+    public PacManEscape() {
+        this(new PacManPlayer(new Vertex(100, 100)), new ArrayList<>());
+        init();
+    }
 
-        public static void main(String[] args) {
-            System.out.println("Hello, World!");
-        }
+    static String level1 = """
+    
+    
+    ggggg
+    ddddd
+    """;
 
     @Override
     public int width() {
-        return 0;
+        return 800;
     }
 
     @Override
     public int height() {
-        return 0;
+        return 600;
     }
 
     @Override
-    public GameObj player() {
+    public FallingImage player() {
         return null;
     }
 
