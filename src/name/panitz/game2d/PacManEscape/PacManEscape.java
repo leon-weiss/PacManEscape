@@ -1,7 +1,6 @@
 package name.panitz.game2d.PacManEscape;
 
 import name.panitz.game2d.*;
-import name.panitz.game2d.klaus.Barrel;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
