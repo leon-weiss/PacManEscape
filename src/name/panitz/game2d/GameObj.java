@@ -30,7 +30,21 @@ public interface GameObj{
 	    		 !(isLeftOf(that) || isRightOf(that)) 
 	    		&& isAbove(that)
 	            && pos().y + height() + velocity().y+1.5 > that.pos().y;
-	  }
+  }
+
+    default boolean touches(Vertex point) {
+        return point.x >= this.pos().x
+                && point.x <= this.pos().x + width()
+                && point.y >= this.pos().y
+                && point.y <= this.pos().y + height();
+    }
+
+    static boolean overlaps(GameObj a, GameObj b) {
+        return !( a.pos().x + a.width() < b.pos().x
+                || a.pos().x > b.pos().x + b.width()
+                || a.pos().y + a.height() < b.pos().y
+                || a.pos().y > b.pos().y + b.height() );
+    }
 
 }
 

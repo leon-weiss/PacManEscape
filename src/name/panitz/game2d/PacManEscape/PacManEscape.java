@@ -9,20 +9,36 @@ import java.util.Random;
 
 import static java.awt.event.KeyEvent.*;
 
-record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj> floor, List<GameObj> clouds, List<List<? extends GameObj>> goss) implements Game {
+record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<List<? extends GameObj>> goss) implements Game {
     public static void main(String[] args) {
         new PacManEscape().play();
     }
 
     static final int GRID_WIDTH = 50;
-    static final int NUM_OF_CLOUDS = 5;
+    static final int NUM_OF_CLOUDS = 3; //NICHT HÖHER ALS 10 (sonst StackOverflow)
+    static int currentLevel;
 
     public PacManEscape() {
-        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         init();
     }
 
     static String level1 = """
+    #
+    #
+    #
+    #          bbbb
+    #
+    #  bb
+    #
+    #      bbb
+    # bbb       b
+    #
+    gggggggggggggggg
+    dddddddddddddddd
+    """;
+
+    static String level2 = """
     #
     #
     #
@@ -36,6 +52,23 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     gggggggggggggggg
     dddddddddddddddd
     """;
+
+    static String level3 = """
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    gggggggggggggggg
+    dddddddddddddddd
+    """;
+
+    static final String[] levels = {level1, level2, level3};
 
     @Override
     public int width() {
@@ -51,7 +84,8 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     public void init() {
         resetAll(goss);
 
-        readLevel();
+        currentLevel = 0;
+        nextLevel();
 
         goss().add(hintergrund());
         hintergrund().add(new ImageObject("hintergrund.png"));
@@ -60,6 +94,7 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         for(int i = 0; i < NUM_OF_CLOUDS; i++) {clouds.add(newCloud(cloudSpawn()));}
 
         goss().add(floor());
+        goss().add(block());
     }
 
     @Override
@@ -70,11 +105,43 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         }
 
         checkPlayerWallCollsions();
+        if (player.pos().x > width()) {
+            nextLevel();
+        }
+
+        boundaries();
     }
 
-    private void checkPlayerWallCollsions() {
+    //Player verlässt Spielfeld/Bildschirm nicht, außer es gibt ein nächstes Level
+    void boundaries() {
+            if (player.pos().x < 0) {player.pos().x = 0;}
+        if (player.pos().x > width() - 50 && currentLevel >= levels.length) {player.pos().x = width()-50;}
+    }
+
+    void nextLevel() {
+        if (currentLevel == levels.length) {
+            if (!won()) {return;};
+        } else {
+            currentLevel++;
+        }
+
+        readLevel(levels[currentLevel-1]);
+        player.pos().x = 0;
+    }
+
+    void checkPlayerWallCollsions() {
         boolean isStandingOnTop = false;
         for (var block : floor()) {
+            if (player.touches(block)) {
+                player.stop();
+                return;
+            }
+            if (player.isStandingOnTopOf(block)) {
+                isStandingOnTop = true;
+            }
+        }
+
+        for (var block : block()) {
             if (player.touches(block)) {
                 player.stop();
                 return;
@@ -116,20 +183,27 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         return false;
     }
 
-    private void readLevel() {
+    private void readLevel(String level) {
+        block().clear();
+
         int l = 0;
-        var lines = level1.split("\\n");
+        var lines = level.split("\\n");
         for (String line : lines) {
             int col = 0;
             for (char c : line.toCharArray()) {
                 switch (c) {
                     case 'd'->floor.add(newDirtblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'g'->floor.add(newGrassblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
+                    case 'b'->block.add(newBrickblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                 }
                 col++;
             }
             l++;
         }
+    }
+
+    static ImageObject newBrickblock(Vertex corner) {
+        return new ImageObject(corner, new Vertex(0, 0), "brick.png");
     }
 
     static ImageObject newGrassblock(Vertex corner) {
@@ -147,16 +221,23 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     //berechnet zufällige Zahl zwischen -0.3 und -0.2 oder 0.2 und 0.3, damit die Wolken unterschiedliche Geschwindigkeiten haben
     static double randomCloudVelocity() {
         double velocity = new Random().nextDouble(0.2, 0.3);
-        System.out.println(velocity);
         return new Random().nextFloat(0, 1) >= 0.5 ? velocity : velocity + (-1);
     }
 
 
     //berechnet Vertex zum spawnen von Wolken-Objekten auf vorbestimmten Ebenen
     Vertex cloudSpawn() {
-        return new Vertex(new Random().nextInt(100, 700), new Random().nextInt(50, 150));
-    }
+        Vertex spawn = new Vertex(new Random().nextInt(0, 800), new Random().nextInt(20, 100));
+        ImageObject testCloud = newCloud(spawn);
 
+        for (var cloud : clouds()) {
+            if (GameObj.overlaps(testCloud, cloud)) {
+                return cloudSpawn();
+            }
+        }
+
+        return spawn;
+    }
 
     //leert alle Listen der goss-Liste und die goss-Liste selbst, um sicherzustellen, dass das Spiel korrekt initialisiert wird
     static void resetAll(List<List<? extends GameObj>> goss) {
