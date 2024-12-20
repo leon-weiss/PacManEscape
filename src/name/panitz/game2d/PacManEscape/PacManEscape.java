@@ -5,6 +5,7 @@ import name.panitz.game2d.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import static java.awt.event.KeyEvent.*;
 
@@ -14,7 +15,7 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     }
 
     static final int GRID_WIDTH = 34;
-    static final int NUM_OF_CLOUDS = 1;
+    static final int NUM_OF_CLOUDS = 5;
 
     public PacManEscape() {
         this(new PacManPlayer(new Vertex(100, 500)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -45,12 +46,15 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         hintergrund().add(new ImageObject("hintergrund.png"));
 
         goss.add(clouds());
-        for(int i = 0; i < NUM_OF_CLOUDS; i++) {clouds.add(newCloud(new Vertex(randomNum(10.0, 500.0), randomNum(10.0, 200.0))));}
+        for(int i = 0; i < NUM_OF_CLOUDS; i++) {clouds.add(newCloud(cloudSpawn()));}
     }
 
     @Override
     public void doChecks() {
-
+        for (var c:clouds()) {
+            if (c.isLeftOf(0)) {c.pos().x = width();}
+            if (c.isRightOf(width())) {c.pos().x = -120;}
+        }
     }
 
     @Override
@@ -97,13 +101,24 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     }
 
     static ImageObject newCloud(Vertex corner) {
-        return new ImageObject(corner, new Vertex(randomNum(-0.5, 0.5), 0), "cloud.png");
+        return new ImageObject(corner, new Vertex(randomCloudVelocity(), 0), "cloud.png");
     }
 
-    static double randomNum(double min, double max) {
-        return ((Math.random() * (max - min)) + min);
+    //berechnet zufällige Zahl zwischen -0.3 und -0.2 oder 0.2 und 0.3, damit die Wolken unterschiedliche Geschwindigkeiten haben
+    static double randomCloudVelocity() {
+        double velocity = new Random().nextDouble(0.2, 0.3);
+        System.out.println(velocity);
+        return new Random().nextFloat(0, 1) >= 0.5 ? velocity : velocity + (-1);
     }
 
+
+    //berechnet Vertex zum spawnen von Wolken-Objekten auf vorbestimmten Ebenen
+    Vertex cloudSpawn() {
+        return new Vertex(new Random().nextInt(100, 700), new Random().nextInt(50, 150));
+    }
+
+
+    //leert alle Listen der goss-Liste und die goss-Liste selbst, um sicherzustellen, dass das Spiel korrekt initialisiert wird
     static void resetAll(List<List<? extends GameObj>> goss) {
         for (var gos : goss) {
             gos.clear();

@@ -17,6 +17,7 @@ public interface GameObj{
   default boolean isLeftOf(double x){return pos().x+width()<x;}
   default boolean isLeftOf(GameObj that){return isLeftOf(that.pos().x);}
   default boolean isRightOf(GameObj that){return that.isLeftOf(this);}
+    default boolean isRightOf(double x){return pos().x>x;}
 
   default boolean touches(GameObj that){
     return 
