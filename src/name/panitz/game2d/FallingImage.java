@@ -47,7 +47,7 @@ public class FallingImage extends AbstractGameObj {
 
 	public void jump() {
 		if (!isJumping) {
-			startJump(-5);
+			startJump(-4);
 		}
 	}
 
@@ -69,5 +69,11 @@ public class FallingImage extends AbstractGameObj {
 	@Override
 	public void paintTo(Graphics g) {
 	    g.drawImage(image, (int)pos.x, (int)pos.y, null);		
+	}
+
+	public void changeImg(String imageFileName) {
+		var iIcon
+				= new ImageIcon(getClass().getClassLoader().getResource(imageFileName));
+		image = iIcon.getImage();
 	}
 }

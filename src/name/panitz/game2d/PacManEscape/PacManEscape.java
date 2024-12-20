@@ -1,6 +1,7 @@
 package name.panitz.game2d.PacManEscape;
 
 import name.panitz.game2d.*;
+import name.panitz.game2d.klaus.Barrel;
 
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -14,19 +15,27 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         new PacManEscape().play();
     }
 
-    static final int GRID_WIDTH = 34;
+    static final int GRID_WIDTH = 50;
     static final int NUM_OF_CLOUDS = 5;
 
     public PacManEscape() {
-        this(new PacManPlayer(new Vertex(100, 500)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         init();
     }
 
     static String level1 = """
-    
-    
-    ggggg
-    ddddd
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    #
+    gggggggggggggggg
+    dddddddddddddddd
     """;
 
     @Override
@@ -42,11 +51,16 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     @Override
     public void init() {
         resetAll(goss);
+
+        readLevel();
+
         goss().add(hintergrund());
         hintergrund().add(new ImageObject("hintergrund.png"));
 
         goss.add(clouds());
         for(int i = 0; i < NUM_OF_CLOUDS; i++) {clouds.add(newCloud(cloudSpawn()));}
+
+        goss().add(floor());
     }
 
     @Override
@@ -55,16 +69,43 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
             if (c.isLeftOf(0)) {c.pos().x = width();}
             if (c.isRightOf(width())) {c.pos().x = -120;}
         }
+
+        checkPlayerWallCollsions();
+    }
+
+    private void checkPlayerWallCollsions() {
+        boolean isStandingOnTop = false;
+        for (var block : floor()) {
+            if (player.touches(block)) {
+                player.stop();
+                return;
+            }
+            if (player.isStandingOnTopOf(block)) {
+                isStandingOnTop = true;
+            }
+        }
+
+        if (!isStandingOnTop && !player.isJumping)
+            player.startJump(0.05);
     }
 
     @Override
     public void keyPressedReaction(KeyEvent keyEvent) {
         switch (keyEvent.getKeyCode()) {
-            case VK_RIGHT -> player().right();
-            case VK_LEFT -> player().left();
-            case VK_SPACE -> player().jump();
+            case VK_RIGHT:
+                player().right();
+                player().changeImg("pacman.gif");
+                break;
+            case VK_LEFT:
+                player().left();
+                player().changeImg("pacman_inverted.gif");
+                break;
+            case VK_SPACE:
+                player().jump();
+                break;
         }
     }
+
 
     @Override
     public boolean won() {
@@ -83,8 +124,8 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
             int col = 0;
             for (char c : line.toCharArray()) {
                 switch (c) {
-                    case 'g'->floor.add(newGrassblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'd'->floor.add(newDirtblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
+                    case 'g'->floor.add(newGrassblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                 }
                 col++;
             }
@@ -93,11 +134,11 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     }
 
     static ImageObject newGrassblock(Vertex corner) {
-        return new ImageObject(corner, new Vertex(0, 0), "grassblock.webp");
+        return new ImageObject(corner, new Vertex(0, 0), "grassblock.png");
     }
 
     static ImageObject newDirtblock(Vertex corner) {
-        return new ImageObject(corner, new Vertex(0, 0), "dirtblock.webp");
+        return new ImageObject(corner, new Vertex(0, 0), "dirtblock.png");
     }
 
     static ImageObject newCloud(Vertex corner) {
