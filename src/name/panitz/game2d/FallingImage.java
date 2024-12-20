@@ -38,20 +38,16 @@ public class FallingImage extends AbstractGameObj {
 
 	
 	public void left() {
-		if (!isJumping) {
-			velocity().x = -1;
-		}
+		velocity().x = -1;
 	}
 
 	public void right() {
-		if (!isJumping) {
-			velocity().x = +1;
-		}
+		velocity().x = 1;
 	}
 
 	public void jump() {
 		if (!isJumping) {
-			startJump(-3.5);
+			startJump(-5);
 		}
 	}
 
@@ -65,8 +61,7 @@ public class FallingImage extends AbstractGameObj {
 	public void move() {
 		if (isJumping) {
 			t++;
-			double v = v0 + G * t / 200;
-			velocity().y = v;
+            velocity().y = v0 + G * t / 200;
 		}
 		super.move();
 	}

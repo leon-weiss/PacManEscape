@@ -1,3 +1,5 @@
+package name.panitz.game2d.PacManEscape;
+
 import name.panitz.game2d.FallingImage;
 import name.panitz.game2d.Vertex;
 
