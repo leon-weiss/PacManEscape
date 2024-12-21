@@ -9,31 +9,32 @@ import java.util.Random;
 
 import static java.awt.event.KeyEvent.*;
 
-record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<List<? extends GameObj>> goss) implements Game {
+record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<List<? extends GameObj>> goss) implements Game {
     public static void main(String[] args) {
         new PacManEscape().play();
     }
 
     static final int GRID_WIDTH = 50;
-    static final int NUM_OF_CLOUDS = 3; //NICHT HÖHER ALS 10 (sonst StackOverflow)
+    static final int NUM_OF_CLOUDS = 4; //NICHT HÖHER ALS 10 (sonst StackOverflow)
     static int currentLevel;
+    static int coinsLeft;
 
     public PacManEscape() {
-        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         init();
     }
 
     static String level1 = """
     #
     #
-    #
+    #bb
     #          bbbb
-    #
+    #       b
     #  bb
     #
     #      bbb
     # bbb       b
-    #
+    #ccccccccccccccc
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -88,24 +89,39 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         nextLevel();
 
         goss().add(hintergrund());
+        hintergrund().add(new ImageObject("ghost_intro.gif"));
+        //button
         hintergrund().add(new ImageObject("hintergrund.png"));
+
+        goss().add(floor());
+        goss().add(block());
+        goss().add(coins());
 
         goss.add(clouds());
         for(int i = 0; i < NUM_OF_CLOUDS; i++) {clouds.add(newCloud(cloudSpawn()));}
 
-        goss().add(floor());
-        goss().add(block());
+
     }
 
     @Override
     public void doChecks() {
+        //Fliegt eine Wolke aus dem Bildbereich
         for (var c:clouds()) {
             if (c.isLeftOf(0)) {c.pos().x = width();}
             if (c.isRightOf(width())) {c.pos().x = -120;}
         }
 
+        //Wurde ein Coin eingesammelt?
+        for (int i = 0; i < coins().size(); i++) {
+            if (player().touches(coins().get(i))) {
+                coins().remove(coins().get(i));
+                coinsLeft--;
+            }
+        }
+
         checkPlayerWallCollsions();
-        if (player.pos().x > width()) {
+
+        if (player.pos().x > width() && coinsLeft == 0) {
             nextLevel();
         }
 
@@ -114,13 +130,14 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
 
     //Player verlässt Spielfeld/Bildschirm nicht, außer es gibt ein nächstes Level
     void boundaries() {
-            if (player.pos().x < 0) {player.pos().x = 0;}
-        if (player.pos().x > width() - 50 && currentLevel >= levels.length) {player.pos().x = width()-50;}
+        if (player.pos().x < 0) {player.pos().x = 0;}
+        System.out.println(currentLevel);
+        if ((player.pos().x > width() - 40 &&  coinsLeft!=0) || (currentLevel >= levels.length && player.pos().x > width() - 40)) {player.pos().x = width()-40;}
     }
 
     void nextLevel() {
         if (currentLevel == levels.length) {
-            if (!won()) {return;};
+            if (!won()) {return;}
         } else {
             currentLevel++;
         }
@@ -184,6 +201,7 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     }
 
     private void readLevel(String level) {
+        coinsLeft = 0;
         block().clear();
 
         int l = 0;
@@ -195,11 +213,17 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
                     case 'd'->floor.add(newDirtblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'g'->floor.add(newGrassblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'b'->block.add(newBrickblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
+                    case 'c'->coins.add(newCoin(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH + 15)));
                 }
                 col++;
             }
             l++;
         }
+    }
+
+    static ImageObject newCoin(Vertex corner) {
+        coinsLeft++;
+        return new ImageObject(corner, new Vertex(0, 0), "coin.gif");
     }
 
     static ImageObject newBrickblock(Vertex corner) {
