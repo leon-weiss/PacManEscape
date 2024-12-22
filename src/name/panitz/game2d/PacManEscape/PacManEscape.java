@@ -9,7 +9,7 @@ import java.util.Random;
 
 import static java.awt.event.KeyEvent.*;
 
-record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<List<? extends GameObj>> goss) implements Game {
+record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<List<? extends GameObj>> goss) implements Game {
     public static void main(String[] args) {
         new PacManEscape().play();
     }
@@ -20,21 +20,21 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     static int coinsLeft;
 
     public PacManEscape() {
-        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),  new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         init();
     }
 
     static String level1 = """
     #
     #
-    #bb
-    #          bbbb
+    #cc          c
+    #bb     c  bbbbb
     #       b
     #  bb
-    #
+    #      ccc
     #      bbb
     # bbb       b
-    #ccccccccccccccc
+    #
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -89,8 +89,6 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         nextLevel();
 
         goss().add(hintergrund());
-        hintergrund().add(new ImageObject("ghost_intro.gif"));
-        //button
         hintergrund().add(new ImageObject("hintergrund.png"));
 
         goss().add(floor());
@@ -108,7 +106,7 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
         //Fliegt eine Wolke aus dem Bildbereich
         for (var c:clouds()) {
             if (c.isLeftOf(0)) {c.pos().x = width();}
-            if (c.isRightOf(width())) {c.pos().x = -120;}
+            if (c.isRightOf(width())) {c.pos().x = -80;}
         }
 
         //Wurde ein Coin eingesammelt?
@@ -131,7 +129,6 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
     //Player verlässt Spielfeld/Bildschirm nicht, außer es gibt ein nächstes Level
     void boundaries() {
         if (player.pos().x < 0) {player.pos().x = 0;}
-        System.out.println(currentLevel);
         if ((player.pos().x > width() - 40 &&  coinsLeft!=0) || (currentLevel >= levels.length && player.pos().x > width() - 40)) {player.pos().x = width()-40;}
     }
 
@@ -213,7 +210,7 @@ record PacManEscape(FallingImage player, List<GameObj> hintergrund, List<GameObj
                     case 'd'->floor.add(newDirtblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'g'->floor.add(newGrassblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'b'->block.add(newBrickblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
-                    case 'c'->coins.add(newCoin(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH + 15)));
+                    case 'c'->coins.add(newCoin(new Vertex(col * GRID_WIDTH + 15, l * GRID_WIDTH + 15)));
                 }
                 col++;
             }
