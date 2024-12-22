@@ -9,18 +9,18 @@ import java.util.Random;
 
 import static java.awt.event.KeyEvent.*;
 
-record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<List<? extends GameObj>> goss) implements Game {
+record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<GameObj> block, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<GameObj> ghosts, List<List<? extends GameObj>> goss) implements Game {
     public static void main(String[] args) {
         new PacManEscape().play();
     }
 
     static final int GRID_WIDTH = 50;
-    static final int NUM_OF_CLOUDS = 4; //NICHT HÖHER ALS 10 (sonst StackOverflow)
+    static final int NUM_OF_CLOUDS = 4;
     static int currentLevel;
     static int coinsLeft;
 
     public PacManEscape() {
-        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(),  new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         init();
     }
 
@@ -29,12 +29,12 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     #
     #cc          c
     #bb     c  bbbbb
-    #       b
+    #   y   b
     #  bb
     #      ccc
     #      bbb
     # bbb       b
-    #
+    #         n p
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -43,7 +43,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     #
     #
     #
-    #
+    bbbbb
     #
     #
     #
@@ -94,6 +94,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         goss().add(floor());
         goss().add(block());
         goss().add(coins());
+        goss().add(ghosts());
 
         goss.add(clouds());
         for(int i = 0; i < NUM_OF_CLOUDS; i++) {clouds.add(newCloud(cloudSpawn()));}
@@ -200,6 +201,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     private void readLevel(String level) {
         coinsLeft = 0;
         block().clear();
+        ghosts().clear();
 
         int l = 0;
         var lines = level.split("\\n");
@@ -211,11 +213,23 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
                     case 'g'->floor.add(newGrassblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'b'->block.add(newBrickblock(new Vertex(col * GRID_WIDTH, l * GRID_WIDTH)));
                     case 'c'->coins.add(newCoin(new Vertex(col * GRID_WIDTH + 15, l * GRID_WIDTH + 15)));
+                    case 'p'->ghosts.add(newGhost(new Vertex(col * GRID_WIDTH + 15, l * GRID_WIDTH + 15), 'p'));
+                    case 'y'->ghosts.add(newGhost(new Vertex(col * GRID_WIDTH + 15, l * GRID_WIDTH + 15), 'y'));
+                    case 'n'->ghosts.add(newGhost(new Vertex(col * GRID_WIDTH + 15, l * GRID_WIDTH + 15), 'n'));
                 }
                 col++;
             }
             l++;
         }
+    }
+
+    static ImageObject newGhost(Vertex corner, char color) {
+        return switch (color) {
+            case 'p'->new ImageObject(corner, new Vertex(0, 0), "ghost_pink.gif");
+            case 'y'->new ImageObject(corner, new Vertex(0, 0), "ghost_yellow.gif");
+            case 'n'->new ImageObject(corner, new Vertex(0, 0), "ghost_cyan.gif");
+            default -> throw new IllegalStateException("Unexpected value: " + color);
+        };
     }
 
     static ImageObject newCoin(Vertex corner) {
