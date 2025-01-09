@@ -22,8 +22,9 @@ public class FallingImage extends AbstractGameObj {
 	}
 
 	public void stop() {
+		double oldX = velocity().x;
 		pos().add(velocity().mult(-1.1));
-		velocity().x = 0;
+		velocity().x = oldX;
 		velocity().y = 0;
 		isJumping = false;
 	}

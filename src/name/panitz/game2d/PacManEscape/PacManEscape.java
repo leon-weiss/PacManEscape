@@ -9,7 +9,7 @@ import java.util.Random;
 
 import static java.awt.event.KeyEvent.*;
 
-record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<GameObj> blocks, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<FallingImage> ghosts, List<List<? extends GameObj>> goss) implements Game {
+record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<GameObj> blocks, List<GameObj> floor, List<GameObj> clouds, List<GameObj> coins, List<FallingImage> ghosts, List<TextObject> texts, List<List<? extends GameObj>> goss) implements Game {
     public static void main(String[] args) {
         new PacManEscape().play();
     }
@@ -21,21 +21,31 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     static int lives = 5;
 
     public PacManEscape() {
-        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new PacManPlayer(new Vertex(100, 400)), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         init();
     }
+
+    /* === Zeichenlegende ===
+     * g -> Grassblock
+     * d -> Erdblock
+     * b -> Backsteinblock
+     * c -> Coin
+     * p -> pinker Geist
+     * y -> gelber Geist
+     * n -> blauer Geist
+     * */
 
     static String level1 = """
     #
     #
-    #cc          c
+    #cc         nc
     #bb     c  bbbbb
     #       b
     #  bb
     #      ccc
     #  y   bbb
     # bbb       b
-    #
+    #           p
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -91,20 +101,23 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
 
         goss().add(hintergrund());
         hintergrund().add(new ImageObject("hintergrund.png"));
+        hintergrund().add(new ImageObject(new Vertex(350, 175), new Vertex(0,0),"castle.png"));
 
         goss().add(floor());
         goss().add(blocks());
         goss().add(coins());
         goss().add(ghosts());
+        goss().add(texts());
 
         goss.add(clouds());
         for (int i = 0; i < NUM_OF_CLOUDS; i++) {
-            clouds.add(newCloud(cloudSpawn()));
+            clouds.add(newCloud(cloudSpawn())); // Erstellt Wolken an zufälligen Positionen
         }
     }
 
     @Override
     public void doChecks() {
+        // Überprüft, ob Wolken den Bildschirm verlassen und setzt sie zurück
         for (var c : clouds()) {
             if (c.isLeftOf(0)) {
                 c.pos().x = width();
@@ -114,6 +127,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
             }
         }
 
+        // Überprüft, ob der Spieler Münzen berührt
         for (int i = 0; i < coins().size(); i++) {
             if (player().touches(coins().get(i))) {
                 coins().remove(coins().get(i));
@@ -121,32 +135,36 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
             }
         }
 
+        // Kollisionserkennung für Spieler und Geister
         checkPlayerWallCollision();
         checkPlayerGhostCollision();
         checkGhostWallCollision();
+        boundaries();
 
+        // Überprüft, ob das Level beendet ist
         if (player.pos().x > width() && coinsLeft == 0) {
             nextLevel();
         }
 
-        boundaries();
     }
 
+    // Begrenzung der Bewegungen für Spieler und Geister
     void boundaries() {
         if (player.pos().x < 0) {
             player.pos().x = 0;
         }
-        if ((player.pos().x > width() - 40 && coinsLeft != 0) || (currentLevel >= levels.length && player.pos().x > width() - 40)) {
-            player.pos().x = width() - 40;
+        if ((player.pos().x > width() - player.width() && coinsLeft != 0) || (currentLevel >= levels.length && player.pos().x > width() - player.width())) {
+            player.pos().x = width() - player.width();
         }
 
         for (var ghost : ghosts()) {
-            if (ghost.pos().x < 0 || ghost.pos().x + 32 > width()) {
-                ghost.velocity().x *= -1;
+            if (ghost.pos().x < 0 || ghost.pos().x + ghost.width() > width()) {
+                ghost.velocity().x *= -1; // Geister ändern Richtung bei Kollision mit Bildschirmrand
             }
         }
     }
 
+    // Überprüfung von Kollisionen der Geister mit Wänden und Plattformen
     void checkGhostWallCollision() {
         for (var ghost : ghosts()) {
             boolean isStandingOnTop = false;
@@ -178,7 +196,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         }
     }
 
-
+    // Lädt das nächste Level
     void nextLevel() {
         if (currentLevel == levels.length) {
             if (!won()) {
@@ -186,19 +204,23 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
             }
         } else {
             currentLevel++;
+            texts.clear();
+            texts.add(new TextObject(new Vertex(50, 560), 28, "Arial", "Leben: " + lives));
+            texts.add(new TextObject(new Vertex(650, 560), 28,"Arial", "Level: " + currentLevel));
         }
 
         readLevel(levels[currentLevel - 1]);
         player.pos().x = 0;
     }
 
+    // Überprüft Kollisionen zwischen Spieler und Geistern
     void checkPlayerGhostCollision() {
         for (int i = 0; i < ghosts().size(); i++) {
             var ghost = ghosts().get(i);
             if (player.touches(ghost)) {
                 ghosts().remove(i);
                 i--;
-                lives--;
+                deductLive();
                 if (lost()) {
                     break;
                 }
@@ -206,6 +228,15 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         }
     }
 
+    // Reduziert die Lebensanzahl des Spielers und Aktualisiert die Textobjekte
+    void deductLive() {
+        lives--;
+        texts.clear();
+        texts.add(new TextObject(new Vertex(50, 560),28, "Arial", "Leben: " + lives));
+        texts.add(new TextObject(new Vertex(650, 560),28, "Arial", "Level: " + currentLevel));
+    }
+
+    // Überprüft Kollisionen des Spielers mit Wänden und Plattformen
     void checkPlayerWallCollision() {
         boolean isStandingOnTop = false;
         for (var block : floor()) {
@@ -233,6 +264,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         }
     }
 
+    //Spielsteuerung
     @Override
     public void keyPressedReaction(KeyEvent keyEvent) {
         if (!lost()) {
@@ -263,10 +295,13 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
             resetAll(goss());
             hintergrund().add(new ImageObject("hintergrund_red.png"));
             goss().add(hintergrund());
+            goss().add(texts());
+            texts.add(new TextObject(new Vertex(180, 300),40, "Arial", "DU HAST VERLORE"));
             return true;
         }
     }
 
+    // Liest die Leveldefinition und erstellt die Objekte
     private void readLevel(String level) {
         coinsLeft = 0;
         blocks().clear();
@@ -290,6 +325,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         }
     }
 
+    // Hilfsmethoden zum Erstellen von Spielobjekten
     static ImageObject newCoin(Vertex corner) {
         coinsLeft++;
         return new ImageObject(corner, new Vertex(0, 0), "coin.gif");
@@ -329,6 +365,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         return spawn;
     }
 
+    // Setzt alle Objektlisten zurück
     static void resetAll(List<List<? extends GameObj>> goss) {
         for (var gos : goss) {
             gos.clear();
