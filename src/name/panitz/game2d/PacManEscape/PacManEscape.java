@@ -36,7 +36,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     #      ccc
     #  y   bbb
     # bbb       b
-    #           p
+    #  pppp     p
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -66,7 +66,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     bbbb
     #
     #
-    #
+    #c
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -90,7 +90,18 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
 
     @Override
     public boolean won() {
-        return false;
+        if (lives > 0 && currentLevel == levels.length && coinsLeft == 0) {
+            resetAll(goss());
+            player.pos().x = width() + player.width();
+            player.pos().y = height() + player.height();
+            hintergrund().add(new ImageObject("hintergrund_green.png"));
+            goss().add(hintergrund());
+            goss().add(texts());
+            texts.add(new TextObject(new Vertex(180, 300), 40, "Arial", "DU HAST GEWONNEN"));
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override
@@ -99,6 +110,8 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
             return false;
         } else {
             resetAll(goss());
+            player.pos().x = width() + player.width();
+            player.pos().y = height() + player.height();
             hintergrund().add(new ImageObject("hintergrund_red.png"));
             goss().add(hintergrund());
             goss().add(texts());
