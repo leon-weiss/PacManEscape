@@ -10,7 +10,7 @@ public class FallingImage extends AbstractGameObj {
 	int t = 0;
 	Image image;
 
-	private final double PLAYER_MOVE_SPEED = 1;
+	private final double PLAYER_MOVE_SPEED = 1.4;
 
 	public boolean isJumping = false;
 
