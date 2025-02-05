@@ -13,7 +13,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     static final int GRID_WIDTH = 50;
     static final int NUM_OF_CLOUDS = 4;
     static int currentLevel;
-    static int coinsLeft;
+    static int coinsLeft = 0;
     static int lives = 5;
 
     /* === Zeichenlegende ===
@@ -36,7 +36,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     #      ccc
     #  y   bbb
     # bbb       b
-    #  pppp     p
+    #           p
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -44,14 +44,14 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     static String level2 = """
     #
     #
-    ccccc        c
+    ycccc        cn
     bbbbb       bbbb
     #
     #      bbb   c
     #           cbbb
     # ccc    cccb
     # bbb  b bbb
-    #n y p
+    #     ccc     p
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -60,13 +60,13 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     #
     #
     #
-    b
-    #
-    #
-    bbbb
-    #
-    #
-    #c
+    bb    y      ncc
+    #     bb     bbb
+    cccc
+    bbbb    c
+    #       b  bb
+    #    bb      bbb
+    #       pcccc
     gggggggggggggggg
     dddddddddddddddd
     """;
@@ -154,7 +154,7 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
     public void doChecks() {
         coinLogic(); // Überprüft, ob der Spieler Münzen berührt
         checkPlayerWallCollision(); // Kollisionserkennung für Spieler
-        checkPlayerGhostCollision(); // Kollisionserkennung für Spieler und Geister
+        checkPlayerGhostCollision(); // Kollisionserkennung zwischen Spieler und Geist
         checkGhostWallCollision(); // Kollisionserkennung für Geister
         boundaries(); // Begrenzung der Bewegungen für Spielobjekte
 

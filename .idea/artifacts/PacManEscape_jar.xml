@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PacManEscape:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/PacManEscape_jar</output-path>
+    <root id="archive" name="PacManEscape.jar">
+      <element id="module-output" name="PacManEscape" />
+    </root>
+  </artifact>
+</component>
