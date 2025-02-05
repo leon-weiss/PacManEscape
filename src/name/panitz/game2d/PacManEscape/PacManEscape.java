@@ -131,6 +131,9 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
         resetAll(goss);
 
         currentLevel = 0;
+        lives = 5;
+        player.pos().x = 100;
+        player.pos().y = 400;
         nextLevel();
 
         goss().add(hintergrund());
@@ -379,6 +382,8 @@ record PacManEscape(FallingImage player, List<ImageObject> hintergrund, List<Gam
                 }
                 case VK_SPACE -> player().jump();
             }
+        } else {
+            if(keyEvent.getKeyCode() == VK_ENTER) init();
         }
     }
 }

@@ -10,6 +10,8 @@ public class FallingImage extends AbstractGameObj {
 	int t = 0;
 	Image image;
 
+	private final double PLAYER_MOVE_SPEED = 1;
+
 	public boolean isJumping = false;
 
 	public FallingImage(String imageFileName, Vertex corner, Vertex movement) {
@@ -39,11 +41,11 @@ public class FallingImage extends AbstractGameObj {
 
 	
 	public void left() {
-		velocity().x = -1;
+		velocity().x = -PLAYER_MOVE_SPEED;
 	}
 
 	public void right() {
-		velocity().x = 1;
+		velocity().x = PLAYER_MOVE_SPEED;
 	}
 
 	public void jump() {
